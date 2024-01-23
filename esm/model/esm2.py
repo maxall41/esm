@@ -6,11 +6,39 @@
 from typing import Union
 import torch
 import torch.nn as nn
-from mamba_ssm import Mamba
+from mamba_ssm.modules.mamba_simple import Mamba, Block
 import esm
 from esm.modules import ContactPredictionHead, ESM1bLayerNorm, RobertaLMHead, TransformerLayer
 
 
+def create_block(
+    d_model,
+    ssm_cfg=None,
+    norm_epsilon=1e-5,
+    rms_norm=False,
+    residual_in_fp32=False,
+    fused_add_norm=False,
+    layer_idx=None,
+    device=None,
+    dtype=None,
+):
+    if ssm_cfg is None:
+        ssm_cfg = {}
+    factory_kwargs = {"device": device, "dtype": dtype}
+    mixer_cls = partial(Mamba, layer_idx=layer_idx, **ssm_cfg, **factory_kwargs)
+    norm_cls = partial(
+        nn.LayerNorm if not rms_norm else RMSNorm, eps=norm_epsilon, **factory_kwargs
+    )
+    block = Block(
+        d_model,
+        mixer_cls,
+        norm_cls=norm_cls,
+        fused_add_norm=fused_add_norm,
+        residual_in_fp32=residual_in_fp32,
+    )
+    block.layer_idx = layer_idx
+    return block
+    
 class ESM2(nn.Module):
     def __init__(
         self,
@@ -56,13 +84,12 @@ class ESM2(nn.Module):
                 #     use_esm1b_layer_norm=True,
                 #     use_rotary_embeddings=True,
                 # )
-                Mamba(
+                create_block(
                     self.embed_dim,
-                    d_state=16,  # SSM state expansion factor
-                    d_conv=4,    # Local convolution width
-                    expand=2,    # Block expansion factor
+                    layer_idx=i,
+                    **factory_kwargs,
                 )
-                for _ in range(self.num_layers)
+                for i in range(self.num_layers)
             ]
         )
 
@@ -116,8 +143,8 @@ class ESM2(nn.Module):
 
         res = None
         for layer_idx, layer in enumerate(self.layers):
-            x = layer(
-                x
+            x, res = layer(
+                x, res, None
             )
             if (layer_idx + 1) in repr_layers:
                 hidden_representations[layer_idx + 1] = x.transpose(0, 1)
