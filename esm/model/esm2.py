@@ -42,13 +42,13 @@ def create_block(
 class ESM2(nn.Module):
     def __init__(
         self,
+        device = None,
+        dtype = None,
         num_layers: int = 33,
         embed_dim: int = 1280,
         attention_heads: int = 20,
         alphabet: Union[esm.data.Alphabet, str] = "ESM-1b",
         token_dropout: bool = True,
-        device: None,
-        dtype: None,
     ):
         super().__init__()
         self.factory_kwargs = {"device": device, "dtype": dtype}
