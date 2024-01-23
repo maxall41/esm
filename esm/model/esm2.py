@@ -115,10 +115,9 @@ class ESM2(nn.Module):
             padding_mask = None
 
         for layer_idx, layer in enumerate(self.layers):
-            x, attn = layer(
+            x, res = layer(
                 x,
-                self_attn_padding_mask=padding_mask,
-                need_head_weights=need_head_weights,
+                res
             )
             if (layer_idx + 1) in repr_layers:
                 hidden_representations[layer_idx + 1] = x.transpose(0, 1)
