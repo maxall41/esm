@@ -116,9 +116,8 @@ class ESM2(nn.Module):
 
         res = None
         for layer_idx, layer in enumerate(self.layers):
-            x, res = layer(
-                x,
-                res
+            x = layer(
+                x
             )
             if (layer_idx + 1) in repr_layers:
                 hidden_representations[layer_idx + 1] = x.transpose(0, 1)
