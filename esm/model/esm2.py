@@ -6,7 +6,7 @@
 from typing import Union
 import torch
 import torch.nn as nn
-
+from mamba_ssm import Mamba
 import esm
 from esm.modules import ContactPredictionHead, ESM1bLayerNorm, RobertaLMHead, TransformerLayer
 
@@ -48,13 +48,19 @@ class ESM2(nn.Module):
 
         self.layers = nn.ModuleList(
             [
-                TransformerLayer(
+                # TransformerLayer(
+                #     self.embed_dim,
+                #     4 * self.embed_dim,
+                #     self.attention_heads,
+                #     add_bias_kv=False,
+                #     use_esm1b_layer_norm=True,
+                #     use_rotary_embeddings=True,
+                # )
+                Mamba(
                     self.embed_dim,
-                    4 * self.embed_dim,
-                    self.attention_heads,
-                    add_bias_kv=False,
-                    use_esm1b_layer_norm=True,
-                    use_rotary_embeddings=True,
+                    d_state=16,  # SSM state expansion factor
+                    d_conv=4,    # Local convolution width
+                    expand=2,    # Block expansion factor
                 )
                 for _ in range(self.num_layers)
             ]
