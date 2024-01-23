@@ -47,8 +47,11 @@ class ESM2(nn.Module):
         attention_heads: int = 20,
         alphabet: Union[esm.data.Alphabet, str] = "ESM-1b",
         token_dropout: bool = True,
+        device: None,
+        dtype: None,
     ):
         super().__init__()
+        self.factory_kwargs = {"device": device, "dtype": dtype}
         self.num_layers = num_layers
         self.embed_dim = embed_dim
         self.attention_heads = attention_heads
@@ -87,7 +90,7 @@ class ESM2(nn.Module):
                 create_block(
                     self.embed_dim,
                     layer_idx=i,
-                    **factory_kwargs,
+                    **self.factory_kwargs,
                 )
                 for i in range(self.num_layers)
             ]
