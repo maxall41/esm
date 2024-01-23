@@ -9,7 +9,12 @@ import torch.nn as nn
 from mamba_ssm.modules.mamba_simple import Mamba, Block
 import esm
 from esm.modules import ContactPredictionHead, ESM1bLayerNorm, RobertaLMHead, TransformerLayer
+from functools import partial
 
+try:
+    from mamba_ssm.ops.triton.layernorm import RMSNorm, layer_norm_fn, rms_norm_fn
+except ImportError:
+    RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None
 
 def create_block(
     d_model,
