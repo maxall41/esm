@@ -114,6 +114,7 @@ class ESM2(nn.Module):
         if not padding_mask.any():
             padding_mask = None
 
+        res = None
         for layer_idx, layer in enumerate(self.layers):
             x, res = layer(
                 x,
